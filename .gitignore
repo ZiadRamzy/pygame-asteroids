@@ -1,0 +1,16 @@
+# Python environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Poetry files
+.venv/
+.mypy_cache/
+.pytest_cache/
+
+# PyGame specific files (often not needed, but good practice)
+*.orig
+
+# IDE files (e.g., VS Code)
+.vscode/
