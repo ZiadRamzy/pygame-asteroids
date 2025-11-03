@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "asteroids-clone"
+version = "0.1.0"
+description = "A PyGame clone of the classic Asteroids game."
+authors = ["ziadramzy8@gmail.com"]
+license = "MIT"
+readme = "README.md"
+packages = [] # Optional: Add this line to explicitly declare no packages
+# -----------------------------------------------------------
+# THIS is where the Poetry-specific setting MUST be placed
+package-mode = false
+# -----------------------------------------------------------
+
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+pygame = ">=2.6.1,<3.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
