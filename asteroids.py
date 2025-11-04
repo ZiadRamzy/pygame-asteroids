@@ -1,26 +1,25 @@
 import pygame
-
-
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GRAY = (100, 100, 100)
-
-GAME_TITLE = "ASTEROIDS CLONE"
+import random
+from constants import (
+    SCREEN_SIZE,  SCREEN_WIDTH, BLACK, WHITE, GRAY,
+    GAME_TITLE, GAME_STATE_MENU, GAME_STATE_PLAYING, SCREEN_HEIGHT
+)
+from ship import Ship
+from asteroid import Asteroid
 
 pygame.init()
-
 screen = pygame.display.set_mode(SCREEN_SIZE)
-
 pygame.display.set_caption(GAME_TITLE)  # window title
-
 clock = pygame.time.Clock()  # frame rate control
 
 font_large = pygame.font.Font(None, 74)
 font_medium = pygame.font.Font(None, 50)
+
+ship = None
+asteroids = []
+running = True
+game_state = GAME_STATE_MENU
+start_button_rect = None
 
 
 def draw_text(surface, text, font, color, center_x, center_y):
@@ -47,16 +46,49 @@ def draw_start_screen():
     return start_button_rect
 
 
-running = True
-game_state = "MENU"
+def start_new_game():
+    """
+    Initializes the entities for a new game
+    """
+    global ship, asteroids
+
+    ship = Ship()
+    asteroids = []
+
+    for _ in range(4):
+        position = (
+            random.choice([
+                random.uniform(0, SCREEN_WIDTH * 0.2),  # left edge
+                random.uniform(SCREEN_WIDTH * 0.8, SCREEN_WIDTH)  # right edge
+            ]),
+            random.uniform(0, SCREEN_HEIGHT)
+        )
+        asteroids.append(Asteroid(position))
+
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    if game_state == "MENU":
-        draw_start_screen()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if game_state == GAME_STATE_MENU and start_button_rect and start_button_rect.collidepoint(event.pos):
+                start_new_game()
+                game_state = GAME_STATE_PLAYING
+
+    if game_state == GAME_STATE_PLAYING:
+        ship.move()
+        for asteroid in asteroids:
+            asteroid.move()
+    
+    screen.fill(BLACK)
+
+    if game_state == GAME_STATE_MENU:
+        start_button_rect = draw_start_screen()
+    elif game_state == GAME_STATE_PLAYING:
+        ship.draw(screen)
+        for asteroid in asteroids:
+            asteroid.draw(screen)
 
     pygame.display.flip()  # flip contents of the display to the screen
 
