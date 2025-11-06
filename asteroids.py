@@ -75,6 +75,26 @@ while running:
             if game_state == GAME_STATE_MENU and start_button_rect and start_button_rect.collidepoint(event.pos):
                 start_new_game()
                 game_state = GAME_STATE_PLAYING
+        
+        if game_state == GAME_STATE_PLAYING and ship:
+            if event.type == pygame.KEYDOWN:
+                # rotation
+                if event.key == pygame.K_LEFT:
+                    ship.rotation_direction = 1  # clockwise (left)
+                elif event.key == pygame.K_RIGHT:
+                    ship.rotation_direction = -1  # counter-clockwise (right)
+                # thrust
+                elif event.key == pygame.K_UP:
+                    ship.is_thrusting = True
+            
+            elif event.type == pygame.KEYUP:
+                # stop rotation
+                if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                    ship.rotation_direction = 0
+                # disable accelration 
+                elif event.key == pygame.K_UP:
+                    ship.is_thrusting = False
+    
 
     if game_state == GAME_STATE_PLAYING:
         ship.move()
