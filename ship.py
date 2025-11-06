@@ -1,6 +1,6 @@
 import pygame
 import math
-from constants import SCREEN_WIDTH, SCREEN_HEIGHT, WHITE
+from constants import SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, SHIP_ROTATION_SPEED, SHIP_FRICTION, SHIP_THRUST
 from game_objects import GameObject
 
 class Ship(GameObject):
@@ -12,7 +12,10 @@ class Ship(GameObject):
         )
         self.color = WHITE
         self.heading = 0  # angle in degress for example 0 is up
-    
+
+        self.is_thrusting = False
+        self.rotation_direction = 0  # -1 left, 1 right, 0 none
+
     def draw (self, surface):
         """
         Draws the trianglular ship shape
@@ -37,3 +40,45 @@ class Ship(GameObject):
             )
         
         pygame.draw.polygon(surface, self.color, rotated_points, 2)
+    
+    def rotate(self):
+        """
+        Change the ship's heading based on the rotation_direction
+        """
+        self.heading += self.rotation_direction * SHIP_ROTATION_SPEED
+        self.heading %= 360
+
+    def thrust(self):
+        """
+        Applies acceleration in the direction the ship is facing
+        """
+        if self.is_thrusting:
+            angle_rad = math.radians(self.heading - 90)
+
+            thrust_x = SHIP_THRUST * math.cos(angle_rad)
+            thrust_y = SHIP_THRUST * math.sin(angle_rad)
+
+            current_vx, current_vy = self.velocity
+            new_vx = current_vx + thrust_x
+            new_vy = current_vy + thrust_y
+
+            self.velocity = (new_vx, new_vy)
+
+    def apply_friction(self):
+        """
+        Slows the ship's velocity over time (drag)
+        """
+        current_vx, current_vy = self.velocity
+        new_vx = current_vx * SHIP_FRICTION
+        new_vy = current_vy * SHIP_FRICTION
+        self.velocity = (new_vx, new_vy)
+
+    def move(self):
+        """
+        Overrides thebase move to include thrust, rotation, and friction
+        """
+        self.rotate()
+        self.thrust()
+        self.apply_friction()
+
+        super().move()
