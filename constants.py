@@ -14,3 +14,8 @@ GAME_TITLE = "ASTEROIDS CLONE"
 # game states
 GAME_STATE_MENU  = "MENU"
 GAME_STATE_PLAYING = "PLAYING"
+
+# ship pysics
+SHIP_ROTATION_SPEED = 3  # degrees per frame
+SHIP_THRUST = 0.1  # acceleration when thrusting
+SHIP_FRICTION = 0.99 # facotr multiplied to velocity for each frame
