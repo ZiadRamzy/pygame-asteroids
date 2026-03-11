@@ -1,8 +1,19 @@
 import pygame
 import random
 from constants import (
-    SCREEN_SIZE,  SCREEN_WIDTH, BLACK, WHITE, GRAY,
-    GAME_TITLE, GAME_STATE_MENU, GAME_STATE_PLAYING, SCREEN_HEIGHT, ASTEROID_START_SIZE
+    ASTEROID_START_SIZE,
+    BLACK,
+    GAME_TITLE,
+    GAME_STATE_MENU,
+    GAME_STATE_PLAYING,
+    GRAY,
+    RESPAWN_DELAY_FRAMES,
+    RESPAWN_INVULNERABILITY_FRAMES,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+    SCREEN_SIZE,
+    STARTING_LIVES,
+    WHITE,
 )
 from ship import Ship
 from asteroid import Asteroid
@@ -21,6 +32,9 @@ ship = None
 asteroids = []
 bullets = []
 score = 0
+lives = STARTING_LIVES
+respawn_timer = 0
+invulnerability_timer = 0
 running = True
 game_state = GAME_STATE_MENU
 start_button_rect = None
@@ -56,16 +70,25 @@ def draw_score():
     screen.blit(score_surface, score_rect)
 
 
+def draw_lives():
+    lives_surface = font_medium.render(f"Lives: {lives}", True, WHITE)
+    lives_rect = lives_surface.get_rect(topright=(SCREEN_WIDTH - 20, 20))
+    screen.blit(lives_surface, lives_rect)
+
+
 def start_new_game():
     """
     Initializes the entities for a new game
     """
-    global ship, asteroids, bullets, score
+    global ship, asteroids, bullets, score, lives, respawn_timer, invulnerability_timer
 
     ship = Ship()
     asteroids = []
     bullets = []
     score = 0
+    lives = STARTING_LIVES
+    respawn_timer = 0
+    invulnerability_timer = 0
 
     for _ in range(4):
         position = (
@@ -109,14 +132,31 @@ def handle_bullet_asteroid_collisions():
 
 
 def handle_ship_asteroid_collisions():
-    global ship, bullets, game_state
+    global ship, bullets, lives, respawn_timer, invulnerability_timer
+
+    if ship is None or invulnerability_timer > 0:
+        return
 
     for asteroid in asteroids:
         if circles_collide(ship, asteroid):
             ship = None
             bullets = []
-            game_state = GAME_STATE_MENU
+            lives -= 1
+            respawn_timer = RESPAWN_DELAY_FRAMES
+            invulnerability_timer = RESPAWN_INVULNERABILITY_FRAMES
             return
+
+
+def update_respawn_state():
+    global ship, respawn_timer, invulnerability_timer
+
+    if ship is None and respawn_timer > 0:
+        respawn_timer -= 1
+        if respawn_timer == 0:
+            ship = Ship()
+
+    if invulnerability_timer > 0:
+        invulnerability_timer -= 1
 
 
 while running:
@@ -152,7 +192,8 @@ while running:
     
 
     if game_state == GAME_STATE_PLAYING:
-        ship.move()
+        if ship:
+            ship.move()
         for asteroid in asteroids:
             asteroid.move()
         for bullet in bullets:
@@ -161,6 +202,7 @@ while running:
         bullets = [bullet for bullet in bullets if not bullet.is_expired()]
         handle_bullet_asteroid_collisions()
         handle_ship_asteroid_collisions()
+        update_respawn_state()
     
     screen.fill(BLACK)
 
@@ -168,7 +210,9 @@ while running:
         start_button_rect = draw_start_screen()
     elif game_state == GAME_STATE_PLAYING:
         draw_score()
-        ship.draw(screen)
+        draw_lives()
+        if ship and (invulnerability_timer == 0 or invulnerability_timer % 10 < 5):
+            ship.draw(screen)
         for asteroid in asteroids:
             asteroid.draw(screen)
         for bullet in bullets:
