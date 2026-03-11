@@ -2,10 +2,12 @@ import pygame
 import random
 from constants import (
     SCREEN_SIZE,  SCREEN_WIDTH, BLACK, WHITE, GRAY,
-    GAME_TITLE, GAME_STATE_MENU, GAME_STATE_PLAYING, SCREEN_HEIGHT
+    GAME_TITLE, GAME_STATE_MENU, GAME_STATE_PLAYING, SCREEN_HEIGHT, ASTEROID_START_SIZE
 )
 from ship import Ship
 from asteroid import Asteroid
+from bullet import Bullet
+from collision import circles_collide
 
 pygame.init()
 screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -17,6 +19,7 @@ font_medium = pygame.font.Font(None, 50)
 
 ship = None
 asteroids = []
+bullets = []
 running = True
 game_state = GAME_STATE_MENU
 start_button_rect = None
@@ -50,10 +53,11 @@ def start_new_game():
     """
     Initializes the entities for a new game
     """
-    global ship, asteroids
+    global ship, asteroids, bullets
 
     ship = Ship()
     asteroids = []
+    bullets = []
 
     for _ in range(4):
         position = (
@@ -63,7 +67,36 @@ def start_new_game():
             ]),
             random.uniform(0, SCREEN_HEIGHT)
         )
-        asteroids.append(Asteroid(position))
+        asteroids.append(Asteroid(position, size_factor=ASTEROID_START_SIZE))
+
+
+def create_bullet_from_ship(ship):
+    return Bullet(position=ship.position, heading=ship.heading, ship_velocity=ship.velocity)
+
+
+def handle_bullet_asteroid_collisions():
+    global bullets, asteroids
+
+    surviving_bullets = []
+    new_asteroids = []
+    remaining_asteroids = asteroids[:]
+
+    for bullet in bullets:
+        hit_asteroid = None
+        for asteroid in remaining_asteroids:
+            if circles_collide(bullet, asteroid):
+                hit_asteroid = asteroid
+                break
+
+        if hit_asteroid is None:
+            surviving_bullets.append(bullet)
+            continue
+
+        remaining_asteroids.remove(hit_asteroid)
+        new_asteroids.extend(hit_asteroid.split())
+
+    bullets = surviving_bullets
+    asteroids = remaining_asteroids + new_asteroids
 
 
 while running:
@@ -80,12 +113,14 @@ while running:
             if event.type == pygame.KEYDOWN:
                 # rotation
                 if event.key == pygame.K_LEFT:
-                    ship.rotation_direction = 1  # clockwise (left)
+                    ship.rotation_direction = -1  # counter-clockwise (left)
                 elif event.key == pygame.K_RIGHT:
-                    ship.rotation_direction = -1  # counter-clockwise (right)
+                    ship.rotation_direction = 1  # clockwise (right)
                 # thrust
                 elif event.key == pygame.K_UP:
                     ship.is_thrusting = True
+                elif event.key == pygame.K_SPACE:
+                    bullets.append(create_bullet_from_ship(ship))
             
             elif event.type == pygame.KEYUP:
                 # stop rotation
@@ -100,6 +135,11 @@ while running:
         ship.move()
         for asteroid in asteroids:
             asteroid.move()
+        for bullet in bullets:
+            bullet.move()
+
+        bullets = [bullet for bullet in bullets if not bullet.is_expired()]
+        handle_bullet_asteroid_collisions()
     
     screen.fill(BLACK)
 
@@ -109,6 +149,8 @@ while running:
         ship.draw(screen)
         for asteroid in asteroids:
             asteroid.draw(screen)
+        for bullet in bullets:
+            bullet.draw(screen)
 
     pygame.display.flip()  # flip contents of the display to the screen
 

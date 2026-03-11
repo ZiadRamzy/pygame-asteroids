@@ -1,7 +1,12 @@
 import pygame
 import random
 import math
-from constants import WHITE
+from constants import (
+    ASTEROID_MIN_SIZE,
+    ASTEROID_SPLIT_SCALE,
+    ASTEROID_SPLIT_SPEED_MULTIPLIER,
+    WHITE,
+)
 from game_objects import GameObject
 
 
@@ -19,6 +24,7 @@ class Asteroid(GameObject):
             radius=radius
         )
         self.color = WHITE
+        self.size_factor = size_factor
         self.points = self._generate_polygon(radius)
 
     def _generate_polygon(self, radius):
@@ -45,3 +51,22 @@ class Asteroid(GameObject):
             for px, py in self.points
         ]
         pygame.draw.polygon(surface, self.color, screen_points, 1)
+
+    def split(self):
+        if self.size_factor <= ASTEROID_MIN_SIZE:
+            return []
+
+        fragments = []
+        for angle_offset in (-0.5, 0.5):
+            speed = math.hypot(self.velocity[0], self.velocity[1]) * ASTEROID_SPLIT_SPEED_MULTIPLIER
+            heading = math.atan2(self.velocity[1], self.velocity[0]) + angle_offset
+            velocity = (speed * math.cos(heading), speed * math.sin(heading))
+
+            fragment = Asteroid(
+                position=self.position,
+                size_factor=self.size_factor * ASTEROID_SPLIT_SCALE,
+            )
+            fragment.velocity = velocity
+            fragments.append(fragment)
+
+        return fragments
