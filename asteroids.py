@@ -108,6 +108,17 @@ def handle_bullet_asteroid_collisions():
     asteroids = remaining_asteroids + new_asteroids
 
 
+def handle_ship_asteroid_collisions():
+    global ship, bullets, game_state
+
+    for asteroid in asteroids:
+        if circles_collide(ship, asteroid):
+            ship = None
+            bullets = []
+            game_state = GAME_STATE_MENU
+            return
+
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -149,6 +160,7 @@ while running:
 
         bullets = [bullet for bullet in bullets if not bullet.is_expired()]
         handle_bullet_asteroid_collisions()
+        handle_ship_asteroid_collisions()
     
     screen.fill(BLACK)
 
