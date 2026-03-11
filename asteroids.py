@@ -4,6 +4,7 @@ from constants import (
     ASTEROID_START_SIZE,
     BLACK,
     GAME_TITLE,
+    GAME_STATE_GAME_OVER,
     GAME_STATE_MENU,
     GAME_STATE_PLAYING,
     GRAY,
@@ -62,6 +63,31 @@ def draw_start_screen():
     )
 
     return start_button_rect
+
+
+def draw_game_over_screen():
+    screen.fill(BLACK)
+
+    draw_text(screen, "GAME OVER", font_large, WHITE, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3)
+    draw_text(
+        screen,
+        f"FINAL SCORE: {score}",
+        font_medium,
+        WHITE,
+        SCREEN_WIDTH // 2,
+        SCREEN_HEIGHT // 2,
+    )
+
+    restart_button_rect = draw_text(
+        screen,
+        "RESTART GAME",
+        font_medium,
+        GRAY,
+        SCREEN_WIDTH // 2,
+        (SCREEN_HEIGHT // 2) + 80,
+    )
+
+    return restart_button_rect
 
 
 def draw_score():
@@ -132,7 +158,7 @@ def handle_bullet_asteroid_collisions():
 
 
 def handle_ship_asteroid_collisions():
-    global ship, bullets, lives, respawn_timer, invulnerability_timer
+    global ship, bullets, game_state, lives, respawn_timer, invulnerability_timer
 
     if ship is None or invulnerability_timer > 0:
         return
@@ -142,8 +168,13 @@ def handle_ship_asteroid_collisions():
             ship = None
             bullets = []
             lives -= 1
-            respawn_timer = RESPAWN_DELAY_FRAMES
-            invulnerability_timer = RESPAWN_INVULNERABILITY_FRAMES
+            if lives <= 0:
+                game_state = GAME_STATE_GAME_OVER
+                respawn_timer = 0
+                invulnerability_timer = 0
+            else:
+                respawn_timer = RESPAWN_DELAY_FRAMES
+                invulnerability_timer = RESPAWN_INVULNERABILITY_FRAMES
             return
 
 
@@ -166,6 +197,9 @@ while running:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if game_state == GAME_STATE_MENU and start_button_rect and start_button_rect.collidepoint(event.pos):
+                start_new_game()
+                game_state = GAME_STATE_PLAYING
+            elif game_state == GAME_STATE_GAME_OVER and start_button_rect and start_button_rect.collidepoint(event.pos):
                 start_new_game()
                 game_state = GAME_STATE_PLAYING
         
@@ -208,6 +242,8 @@ while running:
 
     if game_state == GAME_STATE_MENU:
         start_button_rect = draw_start_screen()
+    elif game_state == GAME_STATE_GAME_OVER:
+        start_button_rect = draw_game_over_screen()
     elif game_state == GAME_STATE_PLAYING:
         draw_score()
         draw_lives()
