@@ -1,7 +1,10 @@
 import pygame
 import random
 from constants import (
+    ASTEROID_BASE_COUNT,
     ASTEROID_START_SIZE,
+    ASTEROID_WAVE_COUNT_INCREASE,
+    ASTEROID_WAVE_SPEED_INCREASE,
     BLACK,
     GAME_TITLE,
     GAME_STATE_GAME_OVER,
@@ -36,6 +39,7 @@ score = 0
 lives = STARTING_LIVES
 respawn_timer = 0
 invulnerability_timer = 0
+wave_number = 1
 running = True
 game_state = GAME_STATE_MENU
 start_button_rect = None
@@ -102,29 +106,59 @@ def draw_lives():
     screen.blit(lives_surface, lives_rect)
 
 
+def draw_wave():
+    wave_surface = font_medium.render(f"Wave: {wave_number}", True, WHITE)
+    wave_rect = wave_surface.get_rect(topleft=(20, 20))
+    screen.blit(wave_surface, wave_rect)
+
+
+def get_wave_asteroid_count():
+    return ASTEROID_BASE_COUNT + ((wave_number - 1) * ASTEROID_WAVE_COUNT_INCREASE)
+
+
+def get_wave_speed_multiplier():
+    return 1 + ((wave_number - 1) * ASTEROID_WAVE_SPEED_INCREASE)
+
+
+def create_asteroid_spawn_position():
+    return (
+        random.choice([
+            random.uniform(0, SCREEN_WIDTH * 0.2),
+            random.uniform(SCREEN_WIDTH * 0.8, SCREEN_WIDTH),
+        ]),
+        random.uniform(0, SCREEN_HEIGHT),
+    )
+
+
+def spawn_wave():
+    global asteroids
+
+    asteroids = []
+    speed_multiplier = get_wave_speed_multiplier()
+    for _ in range(get_wave_asteroid_count()):
+        asteroids.append(
+            Asteroid(
+                create_asteroid_spawn_position(),
+                size_factor=ASTEROID_START_SIZE,
+                speed_multiplier=speed_multiplier,
+            )
+        )
+
+
 def start_new_game():
     """
     Initializes the entities for a new game
     """
-    global ship, asteroids, bullets, score, lives, respawn_timer, invulnerability_timer
+    global ship, asteroids, bullets, score, lives, respawn_timer, invulnerability_timer, wave_number
 
     ship = Ship()
-    asteroids = []
     bullets = []
     score = 0
     lives = STARTING_LIVES
     respawn_timer = 0
     invulnerability_timer = 0
-
-    for _ in range(4):
-        position = (
-            random.choice([
-                random.uniform(0, SCREEN_WIDTH * 0.2),  # left edge
-                random.uniform(SCREEN_WIDTH * 0.8, SCREEN_WIDTH)  # right edge
-            ]),
-            random.uniform(0, SCREEN_HEIGHT)
-        )
-        asteroids.append(Asteroid(position, size_factor=ASTEROID_START_SIZE))
+    wave_number = 1
+    spawn_wave()
 
 
 def create_bullet_from_ship(ship):
@@ -190,6 +224,17 @@ def update_respawn_state():
         invulnerability_timer -= 1
 
 
+def update_wave_state():
+    global wave_number
+
+    if game_state != GAME_STATE_PLAYING:
+        return
+
+    if not asteroids:
+        wave_number += 1
+        spawn_wave()
+
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -237,6 +282,7 @@ while running:
         handle_bullet_asteroid_collisions()
         handle_ship_asteroid_collisions()
         update_respawn_state()
+        update_wave_state()
     
     screen.fill(BLACK)
 
@@ -247,6 +293,7 @@ while running:
     elif game_state == GAME_STATE_PLAYING:
         draw_score()
         draw_lives()
+        draw_wave()
         if ship and (invulnerability_timer == 0 or invulnerability_timer % 10 < 5):
             ship.draw(screen)
         for asteroid in asteroids:

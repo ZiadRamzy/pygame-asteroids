@@ -12,9 +12,9 @@ from game_objects import GameObject
 
 
 class Asteroid(GameObject):
-    def __init__(self, position, size_factor=1.0):
+    def __init__(self, position, size_factor=1.0, speed_multiplier=1.0):
         angle = random.uniform(0, 2 * math.pi)
-        speed = random.uniform(0.5, 2)
+        speed = random.uniform(0.5, 2) * speed_multiplier
         velocity = (speed * math.cos(angle), speed * math.sin(angle))
 
         radius = 30 * size_factor
@@ -26,6 +26,7 @@ class Asteroid(GameObject):
         )
         self.color = WHITE
         self.size_factor = size_factor
+        self.speed_multiplier = speed_multiplier
         self.points = self._generate_polygon(radius)
 
     def _generate_polygon(self, radius):
@@ -66,6 +67,7 @@ class Asteroid(GameObject):
             fragment = Asteroid(
                 position=self.position,
                 size_factor=self.size_factor * ASTEROID_SPLIT_SCALE,
+                speed_multiplier=self.speed_multiplier,
             )
             fragment.velocity = velocity
             fragments.append(fragment)
