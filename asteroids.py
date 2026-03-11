@@ -20,6 +20,7 @@ font_medium = pygame.font.Font(None, 50)
 ship = None
 asteroids = []
 bullets = []
+score = 0
 running = True
 game_state = GAME_STATE_MENU
 start_button_rect = None
@@ -49,15 +50,22 @@ def draw_start_screen():
     return start_button_rect
 
 
+def draw_score():
+    score_surface = font_medium.render(f"Score: {score}", True, WHITE)
+    score_rect = score_surface.get_rect(midtop=(SCREEN_WIDTH // 2, 20))
+    screen.blit(score_surface, score_rect)
+
+
 def start_new_game():
     """
     Initializes the entities for a new game
     """
-    global ship, asteroids, bullets
+    global ship, asteroids, bullets, score
 
     ship = Ship()
     asteroids = []
     bullets = []
+    score = 0
 
     for _ in range(4):
         position = (
@@ -75,7 +83,7 @@ def create_bullet_from_ship(ship):
 
 
 def handle_bullet_asteroid_collisions():
-    global bullets, asteroids
+    global bullets, asteroids, score
 
     surviving_bullets = []
     new_asteroids = []
@@ -93,6 +101,7 @@ def handle_bullet_asteroid_collisions():
             continue
 
         remaining_asteroids.remove(hit_asteroid)
+        score += hit_asteroid.score_value()
         new_asteroids.extend(hit_asteroid.split())
 
     bullets = surviving_bullets
@@ -146,6 +155,7 @@ while running:
     if game_state == GAME_STATE_MENU:
         start_button_rect = draw_start_screen()
     elif game_state == GAME_STATE_PLAYING:
+        draw_score()
         ship.draw(screen)
         for asteroid in asteroids:
             asteroid.draw(screen)

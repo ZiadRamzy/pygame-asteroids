@@ -3,6 +3,7 @@ import random
 import math
 from constants import (
     ASTEROID_MIN_SIZE,
+    ASTEROID_SCORE_VALUES,
     ASTEROID_SPLIT_SCALE,
     ASTEROID_SPLIT_SPEED_MULTIPLIER,
     WHITE,
@@ -70,3 +71,6 @@ class Asteroid(GameObject):
             fragments.append(fragment)
 
         return fragments
+
+    def score_value(self):
+        return ASTEROID_SCORE_VALUES.get(self.size_factor, 0)
