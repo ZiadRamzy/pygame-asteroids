@@ -35,7 +35,7 @@ class GameObject:
         Updates the position based on velocity and applies screen wrap
         """
         new_x = self.position[0] + self.velocity[0]
-        new_y = self.position[1] * self.velocity[1]
+        new_y = self.position[1] + self.velocity[1]
         self.position = wrap_position((new_x, new_y), self.radius)
     
     def draw(self, surface):
